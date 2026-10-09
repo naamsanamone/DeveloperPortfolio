@@ -182,11 +182,11 @@ export default function App() {
       client: "Client: FedEx",
       project: "Global Regulatory Security Intercept Scanning (GRSIS)",
       period: "Apr 2023 – July 2026",
-      location: "Chennai, India",
+      location: "Hyderabad, India",
       points: [
         "Spearheaded architectural migration of a mission-critical logistics monolith into 5 distributed Spring Boot microservices, routing high-throughput traffic via Spring Cloud Gateway.",
         "Engineered the core algorithmic Rule Engine using Strategy and Factory design patterns with short-circuit evaluation logic across 10+ shipment parameters in O(n) execution time.",
-        "Built the high-throughput Scanning Service validation pipeline handling 60,000+ air cargo scans daily across 41 global airport hubs under a strict <100ms P99 latency SLA.",
+        "Built the high-throughput Scanning Service validation pipeline handling 70,000+ air cargo scans daily across 41 global airport hubs under a strict <100ms P99 latency SLA.",
         "Implemented partition resilience using Resilience4j circuit breakers and distributed Redis caching (5-min TTL), eliminating single points of failure.",
         "Architected an event-driven cache invalidation pipeline using RabbitMQ topic exchanges, slashing regulatory rule synchronization across 41 global stations to sub-100ms."
       ],
@@ -222,7 +222,7 @@ export default function App() {
     : skillCategories.filter(c => c.name === activeSkillCategory);
 
   const metrics = [
-    { value: "60K+", label: "Daily FedEx Hub Scans", hoverColor: "group-hover:text-blue-400" },
+    { value: "70K+", label: "Daily FedEx Hub Scans", hoverColor: "group-hover:text-blue-400" },
     { value: "<4ms", label: "Kafka KRaft Redirect Latency", hoverColor: "group-hover:text-blue-400" },
     { value: "300+", label: "LeetCode Solved in Java", hoverColor: "group-hover:text-amber-400" },
     { value: "100%", label: "JaCoCo Microservice Coverage", hoverColor: "group-hover:text-emerald-400" },
@@ -344,7 +344,7 @@ export default function App() {
             </h1>
             <p className="text-zinc-400 text-sm sm:text-base leading-relaxed max-w-3xl pt-1">
               Software Engineer with 3+ years scaling mission-critical microservices to{' '}
-              <strong className="text-zinc-200 font-semibold">60,000+ daily scans at FedEx</strong>.
+              <strong className="text-zinc-200 font-semibold">70,000+ daily scans at FedEx</strong>.
               Active builder of high-performance developer tools, real-time AI security engines, and event-driven Kafka pipelines.
               Leverages <strong className="text-zinc-200 font-semibold">GitHub Copilot</strong> to accelerate engineering velocity from database schema to production.
             </p>
@@ -621,7 +621,7 @@ export default function App() {
             <div className="space-y-2">
               <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">Let's Build Something High-Impact</h2>
               <p className="text-xs sm:text-sm text-zinc-400 max-w-lg mx-auto">Open to early-stage product startups, distributed systems engineering, and full-stack building opportunities.</p>
-              <p className="text-[11px] font-mono text-zinc-500">Chennai, India (IST / UTC+5:30) · Response time: &lt;24 hours</p>
+              <p className="text-[11px] font-mono text-zinc-500">Hyderabad, India (IST / UTC+5:30) · Response time: &lt;24 hours</p>
             </div>
             <div className="flex flex-wrap items-center justify-center gap-2.5 pt-1">
               <a href="mailto:sanamreddysaivenkatareddy@gmail.com" className="shimmer-border text-xs font-semibold px-5 py-2.5 rounded-lg bg-white text-zinc-900 hover:bg-zinc-200 transition-colors inline-flex items-center gap-1.5 shadow-sm">
