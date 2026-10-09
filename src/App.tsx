@@ -97,11 +97,13 @@ function useActiveSection(sectionIds: string[]) {
   return active;
 }
 
+const SECTION_IDS = ['products', 'experience', 'skills', 'achievements'];
+
 export default function App() {
   const [copied, setCopied] = useState(false);
   const [activeSkillCategory, setActiveSkillCategory] = useState('All');
   const [showBackToTop, setShowBackToTop] = useState(false);
-  const activeSection = useActiveSection(['products', 'experience', 'skills', 'achievements']);
+  const activeSection = useActiveSection(SECTION_IDS);
 
   // Scroll progress bar
   const { scrollYProgress } = useScroll();
@@ -211,7 +213,7 @@ export default function App() {
   const skillCategories = [
     { name: "Languages", skills: ["Java", "Python", "TypeScript", "JavaScript", "SQL"] },
     { name: "Backend & Systems", skills: ["Spring Boot", "Spring Cloud", "Spring Security", "Spring Batch", "FastAPI", "Flask", "Microservices", "REST APIs", "Distributed Systems", "CQRS"] },
-    { name: "Frontend & Realtime", skills: ["React", "Next.js", "WebSockets", "Angular", "TypeScript", "HTMX", "Alpine.js", "Tailwind CSS", "HTML5/CSS3", "Thymeleaf"] },
+    { name: "Frontend & Realtime", skills: ["React", "Next.js", "WebSockets", "Angular", "HTMX", "Alpine.js", "Tailwind CSS", "HTML5/CSS3", "Thymeleaf"] },
     { name: "Databases & Messaging", skills: ["PostgreSQL", "Apache Kafka", "Redis", "RabbitMQ", "Supabase", "MongoDB", "MySQL", "asyncpg", "SQLAlchemy"] },
     { name: "Cloud & DevOps", skills: ["AWS (EC2, S3, RDS, Lambda, IAM)", "Microsoft Azure", "Docker", "Jenkins", "SonarQube", "Maven", "Flyway", "CI/CD Pipelines"] },
     { name: "Testing & Tooling", skills: ["GitHub Copilot", "JUnit", "Mockito", "JaCoCo", "Testcontainers", "Git", "Postman", "Swagger", "Chrome Extension", "Splunk", "Zipkin"] }
