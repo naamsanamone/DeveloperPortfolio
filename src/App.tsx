@@ -625,7 +625,7 @@ export default function App() {
               <p className="text-[11px] font-mono text-zinc-500">Hyderabad, India (IST / UTC+5:30) · Response time: &lt;24 hours</p>
             </div>
             <div className="flex flex-wrap items-center justify-center gap-2.5 pt-1">
-              <a href="mailto:sanamreddysaivenkatareddy@gmail.com" className="shimmer-border text-xs font-semibold px-5 py-2.5 rounded-lg bg-white text-zinc-900 hover:bg-zinc-200 transition-colors inline-flex items-center gap-1.5 shadow-sm">
+              <a href="https://mail.google.com/mail/?view=cm&to=sanamreddysaivenkatareddy@gmail.com" target="_blank" rel="noreferrer" className="shimmer-border text-xs font-semibold px-5 py-2.5 rounded-lg bg-white text-zinc-900 hover:bg-zinc-200 transition-colors inline-flex items-center gap-1.5 shadow-sm">
                 <Mail className="w-3.5 h-3.5 text-zinc-900" aria-hidden="true" />
                 <span>Send Email</span>
               </a>
