@@ -65,13 +65,13 @@ function SpotlightCard({ children, className = '' }: { children: React.ReactNode
     <div
       ref={ref}
       onMouseMove={handleMouseMove}
-      className={cn('card-glass rounded-xl relative group', className)}
+      className={cn('card-glass rounded-xl relative group h-full', className)}
     >
       <motion.div
         className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-0"
         style={{ background }}
       />
-      <div className="relative z-10">{children}</div>
+      <div className="relative z-10 h-full flex flex-col">{children}</div>
     </div>
   );
 }
@@ -229,11 +229,11 @@ export default function App() {
   ];
 
   const achievements = [
-    { icon: Award, color: "amber", title: "Star Performer of the PI", desc: "Recognized at FedEx for spearheading the end-to-end Java 8 to Java 17 migration across compliance microservices, delivering 30% latency reduction." },
-    { icon: Activity, color: "blue", title: "30% System Performance", desc: "Diagnosed latency bottlenecks, optimized database plans with composite B-Tree indexes, and deployed distributed Redis caching." },
-    { icon: Terminal, color: "purple", title: "300+ LeetCode Solved", desc: "Demonstrated algorithmic rigor in Java across graphs, trees, dynamic programming, backtracking, and high-concurrency structures." },
-    { icon: ShieldCheck, color: "emerald", title: "Chrome Web Store & Render Deployments", desc: "Published LinkedApply Pro to the official Google Chrome Web Store; deployed DeGhost live MVP on Render with sub-second WebSocket audits." },
-    { icon: Sparkles, color: "indigo", title: "Best Paper Award — Research Publication", desc: "Published deep learning research on Lung Cancer Prediction using ResNet-50 at IJARBEST and won Best Paper. (B.Tech IT, Pondicherry University, CGPA 7.97)." },
+    { icon: Award, iconBg: "bg-amber-500/10 border-amber-500/20", iconText: "text-amber-400", title: "Star Performer of the PI", desc: "Recognized at FedEx for spearheading the end-to-end Java 8 to Java 17 migration across compliance microservices, delivering 30% latency reduction." },
+    { icon: Activity, iconBg: "bg-blue-500/10 border-blue-500/20", iconText: "text-blue-400", title: "30% System Performance", desc: "Diagnosed latency bottlenecks, optimized database plans with composite B-Tree indexes, and deployed distributed Redis caching." },
+    { icon: Terminal, iconBg: "bg-purple-500/10 border-purple-500/20", iconText: "text-purple-400", title: "300+ LeetCode Solved", desc: "Demonstrated algorithmic rigor in Java across graphs, trees, dynamic programming, backtracking, and high-concurrency structures." },
+    { icon: ShieldCheck, iconBg: "bg-emerald-500/10 border-emerald-500/20", iconText: "text-emerald-400", title: "Chrome Web Store & Render Deployments", desc: "Published LinkedApply Pro to the official Google Chrome Web Store; deployed DeGhost live MVP on Render with sub-second WebSocket audits." },
+    { icon: Sparkles, iconBg: "bg-indigo-500/10 border-indigo-500/20", iconText: "text-indigo-400", title: "Best Paper Award — Research Publication", desc: "Published deep learning research on Lung Cancer Prediction using ResNet-50 at IJARBEST and won Best Paper. (B.Tech IT, Pondicherry University, CGPA 7.97)." },
   ];
 
   return (
@@ -540,20 +540,18 @@ export default function App() {
               role="tabpanel"
             >
               {filteredCategories.map((cat, idx) => (
-                <SpotlightCard key={idx} className="p-4 flex flex-col justify-between space-y-3">
-                  <div>
-                    <div className="flex items-center justify-between pb-2 border-b border-white/[0.05]">
-                      <div className="text-xs font-mono font-semibold text-zinc-200 flex items-center gap-2">
-                        <Boxes className="w-3.5 h-3.5 text-blue-400" aria-hidden="true" />
-                        <span>{cat.name}</span>
-                      </div>
-                      <span className="text-[10px] font-mono text-zinc-400">{cat.skills.length} tools</span>
+                <SpotlightCard key={idx} className="p-4">
+                  <div className="flex items-center justify-between pb-2 border-b border-white/[0.05]">
+                    <div className="text-xs font-mono font-semibold text-zinc-200 flex items-center gap-2">
+                      <Boxes className="w-3.5 h-3.5 text-blue-400" aria-hidden="true" />
+                      <span>{cat.name}</span>
                     </div>
-                    <div className="flex flex-wrap gap-1.5 pt-2.5">
-                      {cat.skills.map((s, sIdx) => (
-                        <span key={sIdx} className="whitespace-nowrap text-[11px] px-2 py-0.5 rounded-md border font-mono bg-zinc-900/90 border-white/[0.06] text-zinc-300 hover:border-zinc-700 transition-colors">{s}</span>
-                      ))}
-                    </div>
+                    <span className="text-[10px] font-mono text-zinc-400">{cat.skills.length} tools</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 pt-2.5 flex-1 content-start">
+                    {cat.skills.map((s, sIdx) => (
+                      <span key={sIdx} className="whitespace-nowrap text-[11px] px-2 py-0.5 rounded-md border font-mono bg-zinc-900/90 border-white/[0.06] text-zinc-300 hover:border-zinc-700 transition-colors h-fit">{s}</span>
+                    ))}
                   </div>
                 </SpotlightCard>
               ))}
@@ -581,14 +579,14 @@ export default function App() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
               {achievements.slice(0, 3).map((a, i) => (
                 <motion.div key={i} variants={staggerItem}>
-                  <SpotlightCard className="p-4 flex flex-col justify-between space-y-2 h-full">
+                  <SpotlightCard className="p-4 space-y-2">
                     <div className="flex items-center gap-2.5">
-                      <div className={`w-7 h-7 rounded-lg bg-${a.color}-500/10 border border-${a.color}-500/20 flex items-center justify-center shrink-0`}>
-                        <a.icon className={`w-4 h-4 text-${a.color}-400`} aria-hidden="true" />
+                      <div className={`w-7 h-7 rounded-lg border flex items-center justify-center shrink-0 ${a.iconBg}`}>
+                        <a.icon className={`w-4 h-4 ${a.iconText}`} aria-hidden="true" />
                       </div>
                       <div className="text-xs sm:text-sm font-semibold text-white">{a.title}</div>
                     </div>
-                    <div className="text-xs text-zinc-400 leading-relaxed">{a.desc}</div>
+                    <div className="text-xs text-zinc-400 leading-relaxed flex-1">{a.desc}</div>
                   </SpotlightCard>
                 </motion.div>
               ))}
@@ -597,14 +595,14 @@ export default function App() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 mt-3.5">
               {achievements.slice(3).map((a, i) => (
                 <motion.div key={i} variants={staggerItem}>
-                  <SpotlightCard className="p-4 flex flex-col justify-between space-y-2 h-full">
+                  <SpotlightCard className="p-4 space-y-2">
                     <div className="flex items-center gap-2.5">
-                      <div className={`w-7 h-7 rounded-lg bg-${a.color}-500/10 border border-${a.color}-500/20 flex items-center justify-center shrink-0`}>
-                        <a.icon className={`w-4 h-4 text-${a.color}-400`} aria-hidden="true" />
+                      <div className={`w-7 h-7 rounded-lg border flex items-center justify-center shrink-0 ${a.iconBg}`}>
+                        <a.icon className={`w-4 h-4 ${a.iconText}`} aria-hidden="true" />
                       </div>
                       <div className="text-xs sm:text-sm font-semibold text-white">{a.title}</div>
                     </div>
-                    <div className="text-xs text-zinc-400 leading-relaxed">{a.desc}</div>
+                    <div className="text-xs text-zinc-400 leading-relaxed flex-1">{a.desc}</div>
                   </SpotlightCard>
                 </motion.div>
               ))}
