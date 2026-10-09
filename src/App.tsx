@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { motion, useScroll, useSpring, useMotionTemplate, useMotionValue, AnimatePresence } from 'framer-motion';
 import { 
   ArrowUpRight, 
   Github, 
@@ -15,18 +16,116 @@ import {
   FileText,
   ShieldCheck,
   Activity,
-  ChevronDown
+  ChevronDown,
+  ArrowUp
 } from 'lucide-react';
+
+/* ── Utility: cn (className merge) ─────────────── */
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+function cn(...inputs: ClassValue[]) { return twMerge(clsx(inputs)); }
+
+/* ── Scroll-triggered section reveal ───────────── */
+const ease = [0.16, 1, 0.3, 1] as [number, number, number, number];
+
+const sectionVariants = {
+  hidden: { opacity: 0, y: 24, filter: 'blur(4px)' },
+  visible: { 
+    opacity: 1, y: 0, filter: 'blur(0px)',
+    transition: { duration: 0.6, ease }
+  }
+};
+
+const staggerContainer = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.08 } }
+};
+
+const staggerItem = {
+  hidden: { opacity: 0, y: 16 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease } }
+};
+
+/* ── Spotlight Card Component ──────────────────── */
+function SpotlightCard({ children, className = '' }: { children: React.ReactNode; className?: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!ref.current) return;
+    const { left, top } = ref.current.getBoundingClientRect();
+    mouseX.set(e.clientX - left);
+    mouseY.set(e.clientY - top);
+  }, [mouseX, mouseY]);
+
+  const background = useMotionTemplate`radial-gradient(500px circle at ${mouseX}px ${mouseY}px, rgba(59, 130, 246, 0.06), transparent 40%)`;
+
+  return (
+    <div
+      ref={ref}
+      onMouseMove={handleMouseMove}
+      className={cn('card-glass rounded-xl relative group', className)}
+    >
+      <motion.div
+        className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-0"
+        style={{ background }}
+      />
+      <div className="relative z-10">{children}</div>
+    </div>
+  );
+}
+
+/* ── Active Section Scrollspy Hook ─────────────── */
+function useActiveSection(sectionIds: string[]) {
+  const [active, setActive] = useState('');
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) setActive(entry.target.id);
+        });
+      },
+      { rootMargin: '-30% 0px -60% 0px' }
+    );
+    sectionIds.forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) observer.observe(el);
+    });
+    return () => observer.disconnect();
+  }, [sectionIds]);
+  return active;
+}
 
 export default function App() {
   const [copied, setCopied] = useState(false);
   const [activeSkillCategory, setActiveSkillCategory] = useState('All');
+  const [showBackToTop, setShowBackToTop] = useState(false);
+  const activeSection = useActiveSection(['products', 'experience', 'skills', 'achievements']);
+
+  // Scroll progress bar
+  const { scrollYProgress } = useScroll();
+  const scaleX = useSpring(scrollYProgress, { stiffness: 200, damping: 50, restDelta: 0.001 });
+
+  // Back to top visibility
+  useEffect(() => {
+    const handler = () => setShowBackToTop(window.scrollY > 600);
+    window.addEventListener('scroll', handler, { passive: true });
+    return () => window.removeEventListener('scroll', handler);
+  }, []);
 
   const copyEmail = () => {
     navigator.clipboard.writeText('sanamreddysaivenkatareddy@gmail.com');
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  const navLinks = [
+    { id: 'products', label: 'Products' },
+    { id: 'experience', label: 'Experience' },
+    { id: 'skills', label: 'Skills' },
+    { id: 'achievements', label: 'Achievements' },
+  ];
 
   const flagshipProjects = [
     {
@@ -110,47 +209,48 @@ export default function App() {
   ];
 
   const skillCategories = [
-    {
-      name: "Languages",
-      skills: ["Java", "Python", "TypeScript", "JavaScript", "SQL"]
-    },
-    {
-      name: "Backend & Systems",
-      skills: ["Spring Boot", "Spring Cloud", "Spring Security", "Spring Batch", "FastAPI", "Flask", "Microservices", "REST APIs", "Distributed Systems", "CQRS"]
-    },
-    {
-      name: "Frontend & Realtime",
-      skills: ["React", "Next.js", "WebSockets", "Angular", "TypeScript", "HTMX", "Alpine.js", "Tailwind CSS", "HTML5/CSS3", "Thymeleaf"]
-    },
-    {
-      name: "Databases & Messaging",
-      skills: ["PostgreSQL", "Apache Kafka", "Redis", "RabbitMQ", "Supabase", "MongoDB", "MySQL", "asyncpg", "SQLAlchemy"]
-    },
-    {
-      name: "Cloud & DevOps",
-      skills: ["AWS (EC2, S3, RDS, Lambda, IAM)", "Microsoft Azure", "Docker", "Jenkins", "SonarQube", "Maven", "Flyway", "CI/CD Pipelines"]
-    },
-    {
-      name: "Testing & Tooling",
-      skills: ["GitHub Copilot", "JUnit", "Mockito", "JaCoCo", "Testcontainers", "Git", "Postman", "Swagger", "Chrome Extension", "Splunk", "Zipkin"]
-    }
+    { name: "Languages", skills: ["Java", "Python", "TypeScript", "JavaScript", "SQL"] },
+    { name: "Backend & Systems", skills: ["Spring Boot", "Spring Cloud", "Spring Security", "Spring Batch", "FastAPI", "Flask", "Microservices", "REST APIs", "Distributed Systems", "CQRS"] },
+    { name: "Frontend & Realtime", skills: ["React", "Next.js", "WebSockets", "Angular", "TypeScript", "HTMX", "Alpine.js", "Tailwind CSS", "HTML5/CSS3", "Thymeleaf"] },
+    { name: "Databases & Messaging", skills: ["PostgreSQL", "Apache Kafka", "Redis", "RabbitMQ", "Supabase", "MongoDB", "MySQL", "asyncpg", "SQLAlchemy"] },
+    { name: "Cloud & DevOps", skills: ["AWS (EC2, S3, RDS, Lambda, IAM)", "Microsoft Azure", "Docker", "Jenkins", "SonarQube", "Maven", "Flyway", "CI/CD Pipelines"] },
+    { name: "Testing & Tooling", skills: ["GitHub Copilot", "JUnit", "Mockito", "JaCoCo", "Testcontainers", "Git", "Postman", "Swagger", "Chrome Extension", "Splunk", "Zipkin"] }
   ];
 
   const filteredCategories = activeSkillCategory === 'All' 
     ? skillCategories 
     : skillCategories.filter(c => c.name === activeSkillCategory);
 
+  const metrics = [
+    { value: "60K+", label: "Daily FedEx Hub Scans", hoverColor: "group-hover:text-blue-400" },
+    { value: "<4ms", label: "Kafka KRaft Redirect Latency", hoverColor: "group-hover:text-blue-400" },
+    { value: "300+", label: "LeetCode Solved in Java", hoverColor: "group-hover:text-amber-400" },
+    { value: "100%", label: "JaCoCo Microservice Coverage", hoverColor: "group-hover:text-emerald-400" },
+  ];
+
+  const achievements = [
+    { icon: Award, color: "amber", title: "Star Performer of the PI", desc: "Recognized at FedEx for spearheading the end-to-end Java 8 to Java 17 migration across compliance microservices, delivering 30% latency reduction." },
+    { icon: Activity, color: "blue", title: "30% System Performance", desc: "Diagnosed latency bottlenecks, optimized database plans with composite B-Tree indexes, and deployed distributed Redis caching." },
+    { icon: Terminal, color: "purple", title: "300+ LeetCode Solved", desc: "Demonstrated algorithmic rigor in Java across graphs, trees, dynamic programming, backtracking, and high-concurrency structures." },
+    { icon: ShieldCheck, color: "emerald", title: "Chrome Web Store & Render Deployments", desc: "Published LinkedApply Pro to the official Google Chrome Web Store; deployed DeGhost live MVP on Render with sub-second WebSocket audits." },
+    { icon: Sparkles, color: "indigo", title: "Best Paper Award — Research Publication", desc: "Published deep learning research on Lung Cancer Prediction using ResNet-50 at IJARBEST and won Best Paper. (B.Tech IT, Pondicherry University, CGPA 7.97)." },
+  ];
+
   return (
     <div className="min-h-screen bg-[#08080a] text-zinc-200 relative selection:bg-blue-600/30 selection:text-blue-200 font-sans">
-      {/* Background radial glows and grid pattern */}
+      {/* Background Effects */}
       <div className="fixed inset-0 bg-grid-pattern opacity-40 pointer-events-none" />
       <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[900px] h-[400px] radial-glow pointer-events-none" />
       <div className="fixed top-1/3 right-0 w-[500px] h-[500px] radial-glow-secondary pointer-events-none" />
+      <div className="noise-overlay" />
+
+      {/* Scroll Progress Bar */}
+      <motion.div className="scroll-progress" style={{ scaleX }} />
 
       {/* Navigation */}
-      <header className="sticky top-0 z-50 backdrop-blur-xl bg-[#08080a]/85 border-b border-white/[0.06] transition-all">
+      <header className="sticky top-0 z-50 backdrop-blur-xl bg-[#08080a]/85 border-b border-white/[0.06]">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-          <a href="#" className="flex items-center gap-2.5 group">
+          <a href="#" className="flex items-center gap-2.5 group" aria-label="Sai Venkat - Home">
             <div className="w-7 h-7 rounded-md bg-zinc-900 border border-zinc-700/70 flex items-center justify-center font-mono font-bold text-xs text-blue-400 group-hover:border-blue-500/50 transition-colors">
               SV
             </div>
@@ -159,21 +259,37 @@ export default function App() {
             </span>
           </a>
 
-          <nav className="hidden md:flex items-center gap-6 text-xs font-medium text-zinc-400">
-            <a href="#products" className="hover:text-white transition-colors">Products</a>
-            <a href="#experience" className="hover:text-white transition-colors">Experience</a>
-            <a href="#skills" className="hover:text-white transition-colors">Skills</a>
-            <a href="#achievements" className="hover:text-white transition-colors">Achievements</a>
+          <nav className="hidden md:flex items-center gap-6" role="navigation" aria-label="Main navigation">
+            {navLinks.map((link) => (
+              <a
+                key={link.id}
+                href={`#${link.id}`}
+                className={cn(
+                  'text-xs font-medium transition-colors relative py-1',
+                  activeSection === link.id ? 'text-white' : 'text-zinc-400 hover:text-white'
+                )}
+              >
+                {link.label}
+                {activeSection === link.id && (
+                  <motion.div
+                    layoutId="nav-indicator"
+                    className="absolute -bottom-[1px] left-0 right-0 h-[2px] bg-blue-500 rounded-full"
+                    transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                  />
+                )}
+              </a>
+            ))}
           </nav>
 
           <div className="flex items-center gap-2">
             <button
               onClick={copyEmail}
               className="hidden sm:inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white transition-all"
-              title="Copy Email"
+              aria-label="Copy email address to clipboard"
             >
-              {copied ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-zinc-400" />}
+              {copied ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" aria-hidden="true" /> : <Copy className="w-3.5 h-3.5 text-zinc-400" aria-hidden="true" />}
               <span>{copied ? "Copied!" : "Copy Email"}</span>
+              <span className="sr-only" aria-live="polite">{copied ? "Email copied to clipboard" : ""}</span>
             </button>
 
             <a
@@ -181,8 +297,9 @@ export default function App() {
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-md bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white transition-all"
+              aria-label="View resume PDF (opens in new tab)"
             >
-              <FileText className="w-3.5 h-3.5 text-blue-400" />
+              <FileText className="w-3.5 h-3.5 text-blue-400" aria-hidden="true" />
               <span>Resume</span>
             </a>
 
@@ -191,442 +308,366 @@ export default function App() {
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-md bg-white text-zinc-900 hover:bg-zinc-200 transition-colors shadow-sm"
+              aria-label="GitHub profile (opens in new tab)"
             >
               <span>GitHub</span>
-              <ArrowUpRight className="w-3 h-3" />
+              <ArrowUpRight className="w-3 h-3" aria-hidden="true" />
             </a>
           </div>
         </div>
       </header>
 
-      {/* Main Container with tailored max-w and balanced vertical rhythm */}
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-24 relative z-10 space-y-16 sm:space-y-20">
+      {/* Main Content */}
+      <main id="main-content" className="max-w-5xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-24 relative z-10 space-y-16 sm:space-y-20">
 
-        {/* Hero Section */}
-        <section className="space-y-6">
-          {/* Status Badge */}
-          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-mono">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+        {/* ─── Hero Section ─────────────────────────── */}
+        <motion.section
+          className="space-y-6"
+          initial="hidden"
+          animate="visible"
+          variants={staggerContainer}
+        >
+          <motion.div variants={staggerItem} className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-mono">
+            <span className="relative flex h-2 w-2" aria-hidden="true">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 motion-reduce:hidden"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
             </span>
             <span>Product-Minded Systems Engineer</span>
-          </div>
+          </motion.div>
 
-          {/* Headline & Bio */}
-          <div className="space-y-3.5">
+          <motion.div variants={staggerItem} className="space-y-3.5">
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-white leading-[1.14]">
               Architecting distributed backends. <br className="hidden sm:inline" />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-sky-300 to-indigo-400">
+              <span className="gradient-text">
                 Shipping 0-to-1 products.
               </span>
             </h1>
             <p className="text-zinc-400 text-sm sm:text-base leading-relaxed max-w-3xl pt-1">
               Software Engineer with 3+ years scaling mission-critical microservices to{' '}
-              <strong className="text-zinc-200 font-semibold">60,000+ daily scans at FedEx</strong>. 
-              Active builder of high-performance developer tools, real-time AI security engines, and event-driven Kafka pipelines. 
-              Leverages <strong className="text-blue-300 font-semibold">GitHub Copilot</strong> to accelerate engineering velocity from database schema to production.
+              <strong className="text-zinc-200 font-semibold">60,000+ daily scans at FedEx</strong>.
+              Active builder of high-performance developer tools, real-time AI security engines, and event-driven Kafka pipelines.
+              Leverages <strong className="text-zinc-200 font-semibold">GitHub Copilot</strong> to accelerate engineering velocity from database schema to production.
             </p>
-          </div>
+          </motion.div>
 
-          {/* Social & Contact Buttons */}
-          <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 pt-1">
-            <a
-              href="#products"
-              className="text-xs font-semibold px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition-all shadow-[0_0_20px_rgba(37,99,235,0.25)] inline-flex items-center gap-1.5"
-            >
+          <motion.div variants={staggerItem} className="flex flex-wrap items-center gap-2 sm:gap-2.5 pt-1">
+            <a href="#products" className="shimmer-border text-xs font-semibold px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition-all shadow-[0_0_20px_rgba(37,99,235,0.25)] inline-flex items-center gap-1.5">
               <span>Explore Products</span>
-              <ChevronDown className="w-3.5 h-3.5" />
+              <ChevronDown className="w-3.5 h-3.5" aria-hidden="true" />
             </a>
+            {[
+              { href: "/resume.pdf", icon: FileText, label: "Resume (PDF)", external: true },
+              { href: "https://linkedin.com/in/naamsanam13", icon: Linkedin, label: "LinkedIn", external: true },
+              { href: "https://github.com/naamsanamone", icon: Github, label: "GitHub", external: true },
+              { href: "https://leetcode.com/u/sanamsai/", icon: Terminal, label: "LeetCode (300+)", external: true, iconColor: "text-amber-400" },
+            ].map((btn) => (
+              <a
+                key={btn.label}
+                href={btn.href}
+                target={btn.external ? "_blank" : undefined}
+                rel={btn.external ? "noreferrer" : undefined}
+                className="text-xs font-medium px-3.5 py-2 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white transition-all inline-flex items-center gap-1.5"
+                aria-label={`${btn.label}${btn.external ? ' (opens in new tab)' : ''}`}
+              >
+                <btn.icon className={cn("w-3.5 h-3.5", btn.iconColor || "text-blue-400")} aria-hidden="true" />
+                <span>{btn.label}</span>
+              </a>
+            ))}
+          </motion.div>
 
-            <a
-              href="/resume.pdf"
-              target="_blank"
-              rel="noreferrer"
-              className="text-xs font-medium px-3.5 py-2 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white transition-all inline-flex items-center gap-1.5"
-            >
-              <FileText className="w-3.5 h-3.5 text-blue-400" />
-              <span>Resume (PDF)</span>
-            </a>
+          {/* Proof of Work Metrics */}
+          <motion.div variants={staggerItem} className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-3">
+            {metrics.map((m, i) => (
+              <SpotlightCard key={i} className="p-3.5 group">
+                <div className={cn("text-2xl font-bold font-mono text-white transition-colors", m.hoverColor)}>{m.value}</div>
+                <div className="text-[11px] font-medium text-zinc-400 mt-0.5">{m.label}</div>
+              </SpotlightCard>
+            ))}
+          </motion.div>
+        </motion.section>
 
-            <a
-              href="https://linkedin.com/in/naamsanam13"
-              target="_blank"
-              rel="noreferrer"
-              className="text-xs font-medium px-3.5 py-2 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white transition-all inline-flex items-center gap-1.5"
-            >
-              <Linkedin className="w-3.5 h-3.5 text-blue-400" />
-              <span>LinkedIn</span>
-            </a>
-
-            <a
-              href="https://github.com/naamsanamone"
-              target="_blank"
-              rel="noreferrer"
-              className="text-xs font-medium px-3.5 py-2 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white transition-all inline-flex items-center gap-1.5"
-            >
-              <Github className="w-3.5 h-3.5 text-zinc-300" />
-              <span>GitHub</span>
-            </a>
-
-            <a
-              href="https://leetcode.com/u/sanamsai/"
-              target="_blank"
-              rel="noreferrer"
-              className="text-xs font-medium px-3.5 py-2 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white transition-all inline-flex items-center gap-1.5"
-            >
-              <Terminal className="w-3.5 h-3.5 text-amber-400" />
-              <span>LeetCode (300+)</span>
-            </a>
-          </div>
-
-          {/* Proof of Work Metrics Strip - Redesigned as sleek Bento glass strip */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-3">
-            <div className="bg-zinc-900/40 hover:bg-zinc-900/60 border border-white/[0.06] hover:border-white/[0.12] rounded-xl p-3.5 transition-all group">
-              <div className="text-2xl font-bold font-mono text-white group-hover:text-blue-400 transition-colors">60K+</div>
-              <div className="text-[11px] font-medium text-zinc-400 mt-0.5">Daily FedEx Hub Scans</div>
-            </div>
-            <div className="bg-zinc-900/40 hover:bg-zinc-900/60 border border-white/[0.06] hover:border-white/[0.12] rounded-xl p-3.5 transition-all group">
-              <div className="text-2xl font-bold font-mono text-white group-hover:text-blue-400 transition-colors">&lt;4ms</div>
-              <div className="text-[11px] font-medium text-zinc-400 mt-0.5">Kafka KRaft Redirect Latency</div>
-            </div>
-            <div className="bg-zinc-900/40 hover:bg-zinc-900/60 border border-white/[0.06] hover:border-white/[0.12] rounded-xl p-3.5 transition-all group">
-              <div className="text-2xl font-bold font-mono text-white group-hover:text-amber-400 transition-colors">300+</div>
-              <div className="text-[11px] font-medium text-zinc-400 mt-0.5">LeetCode Solved in Java</div>
-            </div>
-            <div className="bg-zinc-900/40 hover:bg-zinc-900/60 border border-white/[0.06] hover:border-white/[0.12] rounded-xl p-3.5 transition-all group">
-              <div className="text-2xl font-bold font-mono text-white group-hover:text-emerald-400 transition-colors">100%</div>
-              <div className="text-[11px] font-medium text-zinc-400 mt-0.5">JaCoCo Microservice Coverage</div>
-            </div>
-          </div>
-        </section>
-
-        {/* Flagship Products Section */}
-        <section id="products" className="space-y-6 scroll-mt-20">
+        {/* ─── Flagship Products ────────────────────── */}
+        <motion.section
+          id="products"
+          className="space-y-6 scroll-mt-20"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-80px" }}
+          variants={sectionVariants}
+        >
           <div className="space-y-1.5">
             <div className="text-[11px] font-mono font-medium text-blue-400 uppercase tracking-widest">Flagship Products</div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-              0-to-1 Tools Built & Deployed
-            </h2>
-            <p className="text-xs sm:text-sm text-zinc-400">
-              Live products built end-to-end — from database schemas and async pipelines to user interfaces.
-            </p>
+            <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">0-to-1 Tools Built & Deployed</h2>
+            <p className="text-xs sm:text-sm text-zinc-400">Live products built end-to-end — from database schemas and async pipelines to user interfaces.</p>
           </div>
 
-          <div className="grid grid-cols-1 gap-5">
+          <motion.div className="grid grid-cols-1 gap-5" variants={staggerContainer} initial="hidden" whileInView="visible" viewport={{ once: true }}>
             {flagshipProjects.map((p, idx) => (
-              <div 
-                key={idx}
-                className="card-linear rounded-xl p-5 sm:p-6 flex flex-col justify-between space-y-4"
-              >
-                <div className="space-y-3.5">
-                  {/* Top Bar: Title, Status, Action Link */}
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div className="flex flex-wrap items-center gap-2.5">
-                      <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">{p.title}</h3>
-                      <span className={`text-[11px] font-medium font-mono px-2 py-0.5 rounded-full border ${p.statusColor}`}>
-                        {p.status}
-                      </span>
-                    </div>
-
-                    <a
-                      href={p.link}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 hover:border-blue-500/40 transition-all shrink-0"
-                    >
-                      <span>{p.actionText}</span>
-                      <ExternalLink className="w-3.5 h-3.5" />
-                    </a>
-                  </div>
-
-                  {/* Subtitle */}
-                  <div className="text-xs sm:text-sm font-medium text-zinc-300">
-                    {p.subtitle}
-                  </div>
-
-                  {/* Description */}
-                  <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
-                    {p.description}
-                  </p>
-
-                  {/* Highlights Grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
-                    {p.highlights.map((h, hIdx) => (
-                      <div key={hIdx} className="bg-zinc-900/60 border border-white/[0.05] rounded-lg p-2.5 text-xs text-zinc-300 flex items-start gap-2">
-                        <Zap className="w-3.5 h-3.5 text-blue-400 mt-0.5 shrink-0" />
-                        <div>
-                          <div className="font-medium text-white text-[11px]">{h.title}</div>
-                          <div className="text-[11px] text-zinc-400 leading-snug">{h.desc}</div>
-                        </div>
+              <motion.div key={idx} variants={staggerItem}>
+                <SpotlightCard className="p-5 sm:p-6 flex flex-col justify-between space-y-4">
+                  <div className="space-y-3.5">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="flex flex-wrap items-center gap-2.5">
+                        <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">{p.title}</h3>
+                        <span className={cn("text-[11px] font-medium font-mono px-2 py-0.5 rounded-full border", p.statusColor)}>{p.status}</span>
                       </div>
+                      <a href={p.link} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 hover:border-blue-500/40 transition-all shrink-0" aria-label={`${p.actionText} (opens in new tab)`}>
+                        <span>{p.actionText}</span>
+                        <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
+                      </a>
+                    </div>
+                    <div className="text-xs sm:text-sm font-medium text-zinc-300">{p.subtitle}</div>
+                    <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">{p.description}</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
+                      {p.highlights.map((h, hIdx) => (
+                        <div key={hIdx} className="bg-zinc-900/60 border border-white/[0.05] rounded-lg p-2.5 text-xs flex items-start gap-2">
+                          <Zap className="w-3.5 h-3.5 text-blue-400 mt-0.5 shrink-0" aria-hidden="true" />
+                          <div>
+                            <div className="font-medium text-white text-[11px]">{h.title}</div>
+                            <div className="text-[11px] text-zinc-400 leading-snug">{h.desc}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="pt-3 border-t border-white/[0.06] flex flex-wrap items-center gap-1.5">
+                    {p.techStack.map((tech, tIdx) => (
+                      <span key={tIdx} className="text-[11px] font-mono px-2 py-0.5 rounded bg-zinc-900/90 text-zinc-300 border border-white/[0.06]">{tech}</span>
                     ))}
                   </div>
-                </div>
-
-                {/* Tech Stack Pills */}
-                <div className="pt-3 border-t border-white/[0.06] flex flex-wrap items-center gap-1.5">
-                  {p.techStack.map((tech, tIdx) => (
-                    <span 
-                      key={tIdx} 
-                      className="text-[11px] font-mono px-2 py-0.5 rounded bg-zinc-900/90 text-zinc-300 border border-white/[0.06]"
-                    >
-                      {tech}
-                    </span>
-                  ))}
-                </div>
-              </div>
+                </SpotlightCard>
+              </motion.div>
             ))}
-          </div>
-        </section>
+          </motion.div>
+        </motion.section>
 
-        {/* Enterprise Experience Section */}
-        <section id="experience" className="space-y-6 scroll-mt-20">
+        {/* ─── Enterprise Experience ────────────────── */}
+        <motion.section
+          id="experience"
+          className="space-y-6 scroll-mt-20"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-80px" }}
+          variants={sectionVariants}
+        >
           <div className="space-y-1.5">
             <div className="text-[11px] font-mono font-medium text-blue-400 uppercase tracking-widest">Enterprise Scale</div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-              Production Systems Experience
-            </h2>
-            <p className="text-xs sm:text-sm text-zinc-400">
-              High-throughput architectures operating in high-concurrency enterprise environments.
-            </p>
+            <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">Production Systems Experience</h2>
+            <p className="text-xs sm:text-sm text-zinc-400">High-throughput architectures operating in high-concurrency enterprise environments.</p>
           </div>
 
-          <div className="space-y-5">
+          <motion.div className="space-y-5" variants={staggerContainer} initial="hidden" whileInView="visible" viewport={{ once: true }}>
             {enterpriseExp.map((exp, idx) => (
-              <div key={idx} className="card-linear rounded-xl p-5 sm:p-6 space-y-4">
-                {/* Header */}
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">{exp.role}</h3>
-                      {exp.client && (
-                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/20 text-blue-300">
-                          {exp.client}
-                        </span>
-                      )}
+              <motion.div key={idx} variants={staggerItem}>
+                <SpotlightCard className="p-5 sm:p-6 space-y-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">{exp.role}</h3>
+                        {exp.client && (
+                          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/20 text-blue-300">{exp.client}</span>
+                        )}
+                      </div>
+                      <div className="text-xs sm:text-sm font-medium text-blue-400 pt-0.5">{exp.company}</div>
+                      <div className="text-xs text-zinc-400 italic pt-0.5">Project: {exp.project}</div>
                     </div>
-                    <div className="text-xs sm:text-sm font-medium text-blue-400 pt-0.5">{exp.company}</div>
-                    <div className="text-xs text-zinc-400 italic pt-0.5">Project: {exp.project}</div>
+                    <div className="text-xs font-mono text-zinc-400 text-left sm:text-right shrink-0">
+                      <div className="text-zinc-300 font-medium"><time>{exp.period}</time></div>
+                      <div className="text-zinc-500">{exp.location}</div>
+                    </div>
                   </div>
-                  <div className="text-xs font-mono text-zinc-400 text-left sm:text-right shrink-0">
-                    <div className="text-zinc-300 font-medium">{exp.period}</div>
-                    <div className="text-zinc-500">{exp.location}</div>
+                  <ul className="space-y-2 pt-1" role="list">
+                    {exp.points.map((pt, pIdx) => (
+                      <li key={pIdx} className="text-xs sm:text-sm text-zinc-400 flex items-start gap-2.5 leading-relaxed">
+                        <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 shrink-0" aria-hidden="true" />
+                        <span>{pt}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="pt-3 border-t border-white/[0.06] flex flex-wrap items-center gap-1.5">
+                    {exp.tech.map((t, tIdx) => (
+                      <span key={tIdx} className="text-[10px] sm:text-[11px] font-mono px-2 py-0.5 rounded bg-zinc-900/90 text-zinc-300 border border-white/[0.06]">{t}</span>
+                    ))}
                   </div>
-                </div>
-
-                {/* Bullets */}
-                <ul className="space-y-2 pt-1">
-                  {exp.points.map((pt, pIdx) => (
-                    <li key={pIdx} className="text-xs sm:text-sm text-zinc-400 flex items-start gap-2.5 leading-relaxed">
-                      <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 shrink-0" />
-                      <span>{pt}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                {/* Skills Badges Bar */}
-                <div className="pt-3 border-t border-white/[0.06] flex flex-wrap items-center gap-1.5">
-                  {exp.tech.map((t, tIdx) => (
-                    <span 
-                      key={tIdx} 
-                      className="text-[10px] sm:text-[11px] font-mono px-2 py-0.5 rounded bg-zinc-900/90 text-zinc-300 border border-white/[0.06]"
-                    >
-                      {t}
-                    </span>
-                  ))}
-                </div>
-              </div>
+                </SpotlightCard>
+              </motion.div>
             ))}
-          </div>
-        </section>
+          </motion.div>
+        </motion.section>
 
-        {/* Technical Skills Radar */}
-        <section id="skills" className="space-y-6 scroll-mt-20">
+        {/* ─── Technical Skills ────────────────────── */}
+        <motion.section
+          id="skills"
+          className="space-y-6 scroll-mt-20"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-80px" }}
+          variants={sectionVariants}
+        >
           <div className="space-y-1.5">
             <div className="text-[11px] font-mono font-medium text-blue-400 uppercase tracking-widest">Technical Expertise</div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-              Skills & Core Technologies
-            </h2>
-            <p className="text-xs sm:text-sm text-zinc-400">
-              Clean, categorized overview across backend, frontend, systems, databases, and AI tooling.
-            </p>
+            <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">Skills & Core Technologies</h2>
+            <p className="text-xs sm:text-sm text-zinc-400">Clean, categorized overview across backend, frontend, systems, databases, and AI tooling.</p>
           </div>
 
-          {/* Filter Pills */}
-          <div className="flex flex-wrap items-center gap-1.5">
+          <div className="flex flex-wrap items-center gap-1.5" role="tablist" aria-label="Skill categories">
             {["All", ...skillCategories.map(c => c.name)].map((cat, idx) => (
               <button
                 key={idx}
                 onClick={() => setActiveSkillCategory(cat)}
-                className={`text-xs px-3 py-1.5 rounded-lg border transition-all ${
-                  activeSkillCategory === cat 
-                    ? "bg-blue-600 border-blue-500 text-white font-medium shadow-[0_0_15px_rgba(37,99,235,0.3)]" 
+                role="tab"
+                aria-selected={activeSkillCategory === cat}
+                className={cn(
+                  'text-xs px-3 py-1.5 rounded-lg border transition-all',
+                  activeSkillCategory === cat
+                    ? "bg-blue-600 border-blue-500 text-white font-medium shadow-[0_0_15px_rgba(37,99,235,0.3)]"
                     : "bg-zinc-900/60 border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700"
-                }`}
+                )}
               >
                 {cat}
               </button>
             ))}
           </div>
 
-          {/* Grid of Skill Cards with uniform height and clean layout */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
-            {filteredCategories.map((cat, idx) => (
-              <div 
-                key={idx} 
-                className="bg-zinc-900/40 border border-white/[0.06] hover:border-white/[0.12] rounded-xl p-4 flex flex-col justify-between transition-colors space-y-3"
-              >
-                <div>
-                  <div className="flex items-center justify-between pb-2 border-b border-white/[0.05]">
-                    <div className="text-xs font-mono font-semibold text-zinc-200 flex items-center gap-2">
-                      <Boxes className="w-3.5 h-3.5 text-blue-400" />
-                      <span>{cat.name}</span>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeSkillCategory}
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.25 }}
+              role="tabpanel"
+            >
+              {filteredCategories.map((cat, idx) => (
+                <SpotlightCard key={idx} className="p-4 flex flex-col justify-between space-y-3">
+                  <div>
+                    <div className="flex items-center justify-between pb-2 border-b border-white/[0.05]">
+                      <div className="text-xs font-mono font-semibold text-zinc-200 flex items-center gap-2">
+                        <Boxes className="w-3.5 h-3.5 text-blue-400" aria-hidden="true" />
+                        <span>{cat.name}</span>
+                      </div>
+                      <span className="text-[10px] font-mono text-zinc-400">{cat.skills.length} tools</span>
                     </div>
-                    <span className="text-[10px] font-mono text-zinc-400">{cat.skills.length} tools</span>
+                    <div className="flex flex-wrap gap-1.5 pt-2.5">
+                      {cat.skills.map((s, sIdx) => (
+                        <span key={sIdx} className="whitespace-nowrap text-[11px] px-2 py-0.5 rounded-md border font-mono bg-zinc-900/90 border-white/[0.06] text-zinc-300 hover:border-zinc-700 transition-colors">{s}</span>
+                      ))}
+                    </div>
                   </div>
+                </SpotlightCard>
+              ))}
+            </motion.div>
+          </AnimatePresence>
+        </motion.section>
 
-                  <div className="flex flex-wrap gap-1.5 pt-2.5">
-                    {cat.skills.map((s, sIdx) => (
-                      <span 
-                        key={sIdx} 
-                        className="whitespace-nowrap text-[11px] px-2 py-0.5 rounded-md border font-mono bg-zinc-900/90 border-white/[0.06] text-zinc-300 hover:border-zinc-700 transition-colors"
-                      >
-                        {s}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Milestones & Achievements - Tight, balanced bento grid */}
-        <section id="achievements" className="space-y-6 scroll-mt-20">
+        {/* ─── Achievements ────────────────────────── */}
+        <motion.section
+          id="achievements"
+          className="space-y-6 scroll-mt-20"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-80px" }}
+          variants={sectionVariants}
+        >
           <div className="space-y-1.5">
             <div className="text-[11px] font-mono font-medium text-blue-400 uppercase tracking-widest">Proof of Work</div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-              Milestones & Achievements
-            </h2>
-            <p className="text-xs sm:text-sm text-zinc-400">
-              Verified outcomes, algorithmic rigor, and academic publication.
-            </p>
+            <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">Milestones & Achievements</h2>
+            <p className="text-xs sm:text-sm text-zinc-400">Verified outcomes, algorithmic rigor, and academic publication.</p>
           </div>
 
-          {/* Row 1: 3 cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
-            <div className="bg-zinc-900/40 border border-white/[0.06] hover:border-white/[0.12] rounded-xl p-4 flex flex-col justify-between space-y-2 transition-all">
-              <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
-                  <Award className="w-4 h-4 text-amber-400" />
-                </div>
-                <div className="text-xs sm:text-sm font-semibold text-white">Star Performer of the PI</div>
-              </div>
-              <div className="text-xs text-zinc-400 leading-relaxed">
-                Recognized at FedEx for spearheading the end-to-end Java 8 to Java 17 migration across compliance microservices, delivering 30% latency reduction.
-              </div>
+          <motion.div variants={staggerContainer} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+            {/* Row 1: 3 cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+              {achievements.slice(0, 3).map((a, i) => (
+                <motion.div key={i} variants={staggerItem}>
+                  <SpotlightCard className="p-4 flex flex-col justify-between space-y-2 h-full">
+                    <div className="flex items-center gap-2.5">
+                      <div className={`w-7 h-7 rounded-lg bg-${a.color}-500/10 border border-${a.color}-500/20 flex items-center justify-center shrink-0`}>
+                        <a.icon className={`w-4 h-4 text-${a.color}-400`} aria-hidden="true" />
+                      </div>
+                      <div className="text-xs sm:text-sm font-semibold text-white">{a.title}</div>
+                    </div>
+                    <div className="text-xs text-zinc-400 leading-relaxed">{a.desc}</div>
+                  </SpotlightCard>
+                </motion.div>
+              ))}
             </div>
-
-            <div className="bg-zinc-900/40 border border-white/[0.06] hover:border-white/[0.12] rounded-xl p-4 flex flex-col justify-between space-y-2 transition-all">
-              <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
-                  <Activity className="w-4 h-4 text-blue-400" />
-                </div>
-                <div className="text-xs sm:text-sm font-semibold text-white">30% System Performance</div>
-              </div>
-              <div className="text-xs text-zinc-400 leading-relaxed">
-                Diagnosed latency bottlenecks, optimized database plans with composite B-Tree indexes, and deployed distributed Redis caching.
-              </div>
+            {/* Row 2: 2 cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 mt-3.5">
+              {achievements.slice(3).map((a, i) => (
+                <motion.div key={i} variants={staggerItem}>
+                  <SpotlightCard className="p-4 flex flex-col justify-between space-y-2 h-full">
+                    <div className="flex items-center gap-2.5">
+                      <div className={`w-7 h-7 rounded-lg bg-${a.color}-500/10 border border-${a.color}-500/20 flex items-center justify-center shrink-0`}>
+                        <a.icon className={`w-4 h-4 text-${a.color}-400`} aria-hidden="true" />
+                      </div>
+                      <div className="text-xs sm:text-sm font-semibold text-white">{a.title}</div>
+                    </div>
+                    <div className="text-xs text-zinc-400 leading-relaxed">{a.desc}</div>
+                  </SpotlightCard>
+                </motion.div>
+              ))}
             </div>
+          </motion.div>
+        </motion.section>
 
-            <div className="bg-zinc-900/40 border border-white/[0.06] hover:border-white/[0.12] rounded-xl p-4 flex flex-col justify-between space-y-2 transition-all">
-              <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0">
-                  <Terminal className="w-4 h-4 text-purple-400" />
-                </div>
-                <div className="text-xs sm:text-sm font-semibold text-white">300+ LeetCode Solved</div>
-              </div>
-              <div className="text-xs text-zinc-400 leading-relaxed">
-                Demonstrated algorithmic rigor in Java across graphs, trees, dynamic programming, backtracking, and high-concurrency structures.
-              </div>
+        {/* ─── Contact CTA ─────────────────────────── */}
+        <motion.section
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-80px" }}
+          variants={sectionVariants}
+        >
+          <SpotlightCard className="p-6 sm:p-10 text-center space-y-4 max-w-2xl mx-auto rounded-2xl">
+            <div className="space-y-2">
+              <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">Let's Build Something High-Impact</h2>
+              <p className="text-xs sm:text-sm text-zinc-400 max-w-lg mx-auto">Open to early-stage product startups, distributed systems engineering, and full-stack building opportunities.</p>
+              <p className="text-[11px] font-mono text-zinc-500">Chennai, India (IST / UTC+5:30) · Response time: &lt;24 hours</p>
             </div>
-          </div>
-
-          {/* Row 2: 2 balanced wider cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-            <div className="bg-zinc-900/40 border border-white/[0.06] hover:border-white/[0.12] rounded-xl p-4 flex flex-col justify-between space-y-2 transition-all">
-              <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
-                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                </div>
-                <div className="text-xs sm:text-sm font-semibold text-white">Chrome Web Store & Render Deployments</div>
-              </div>
-              <div className="text-xs text-zinc-400 leading-relaxed">
-                Published LinkedApply Pro to the official Google Chrome Web Store; deployed DeGhost live MVP on Render with sub-second WebSocket audits.
-              </div>
+            <div className="flex flex-wrap items-center justify-center gap-2.5 pt-1">
+              <a href="mailto:sanamreddysaivenkatareddy@gmail.com" className="shimmer-border text-xs font-semibold px-5 py-2.5 rounded-lg bg-white text-zinc-900 hover:bg-zinc-200 transition-colors inline-flex items-center gap-1.5 shadow-sm">
+                <Mail className="w-3.5 h-3.5 text-zinc-900" aria-hidden="true" />
+                <span>Send Email</span>
+              </a>
+              <button onClick={copyEmail} className="text-xs font-medium px-4 py-2.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white transition-all inline-flex items-center gap-1.5" aria-label="Copy email address">
+                {copied ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" aria-hidden="true" /> : <Copy className="w-3.5 h-3.5 text-zinc-400" aria-hidden="true" />}
+                <span>{copied ? "Copied!" : "Copy Email"}</span>
+              </button>
             </div>
-
-            <div className="bg-zinc-900/40 border border-white/[0.06] hover:border-white/[0.12] rounded-xl p-4 flex flex-col justify-between space-y-2 transition-all">
-              <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center shrink-0">
-                  <Sparkles className="w-4 h-4 text-indigo-400" />
-                </div>
-                <div className="text-xs sm:text-sm font-semibold text-white">Best Paper Award — Research Publication</div>
-              </div>
-              <div className="text-xs text-zinc-400 leading-relaxed">
-                Published deep learning research on <em>Lung Cancer Prediction using ResNet-50</em> at IJARBEST and won Best Paper. (B.Tech IT, Pondicherry University, CGPA 7.97).
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Contact & CTA Section */}
-        <section className="card-linear rounded-2xl p-6 sm:p-10 text-center space-y-4 max-w-2xl mx-auto">
-          <div className="space-y-2">
-            <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-              Let's Build Something High-Impact
-            </h2>
-            <p className="text-xs sm:text-sm text-zinc-400 max-w-lg mx-auto">
-              Open to early-stage product startups, distributed systems engineering, and full-stack building opportunities.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center justify-center gap-2.5 pt-1">
-            <a
-              href="mailto:sanamreddysaivenkatareddy@gmail.com"
-              className="text-xs font-semibold px-5 py-2.5 rounded-lg bg-white text-zinc-900 hover:bg-zinc-200 transition-colors inline-flex items-center gap-1.5 shadow-sm"
-            >
-              <Mail className="w-3.5 h-3.5 text-zinc-900" />
-              <span>Send Email</span>
-            </a>
-
-            <button
-              onClick={copyEmail}
-              className="text-xs font-medium px-4 py-2.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white transition-all inline-flex items-center gap-1.5"
-            >
-              {copied ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-zinc-400" />}
-              <span>{copied ? "Copied!" : "Copy Email"}</span>
-            </button>
-          </div>
-        </section>
+          </SpotlightCard>
+        </motion.section>
 
       </main>
 
       {/* Footer */}
       <footer className="border-t border-white/[0.06] py-6 text-xs text-zinc-400 relative z-10">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div>
-            © {new Date().getFullYear()} Sanamreddy Sai Venkata Reddy. Built with React & Tailwind.
-          </div>
-          <div className="flex items-center gap-4 text-zinc-400">
-            <a href="https://github.com/naamsanamone" target="_blank" rel="noreferrer" className="hover:text-white transition-colors">GitHub</a>
-            <a href="https://linkedin.com/in/naamsanam13" target="_blank" rel="noreferrer" className="hover:text-white transition-colors">LinkedIn</a>
-            <a href="https://leetcode.com/u/sanamsai/" target="_blank" rel="noreferrer" className="hover:text-white transition-colors">LeetCode</a>
-            <a href="/resume.pdf" target="_blank" rel="noreferrer" className="hover:text-white transition-colors">Resume</a>
+          <div>© {new Date().getFullYear()} Sanamreddy Sai Venkata Reddy. Built with React & Tailwind.</div>
+          <div className="flex items-center gap-4">
+            <a href="https://github.com/naamsanamone" target="_blank" rel="noreferrer" className="hover:text-white transition-colors" aria-label="GitHub (opens in new tab)">GitHub</a>
+            <a href="https://linkedin.com/in/naamsanam13" target="_blank" rel="noreferrer" className="hover:text-white transition-colors" aria-label="LinkedIn (opens in new tab)">LinkedIn</a>
+            <a href="https://leetcode.com/u/sanamsai/" target="_blank" rel="noreferrer" className="hover:text-white transition-colors" aria-label="LeetCode (opens in new tab)">LeetCode</a>
+            <a href="/resume.pdf" target="_blank" rel="noreferrer" className="hover:text-white transition-colors" aria-label="Resume PDF (opens in new tab)">Resume</a>
           </div>
         </div>
       </footer>
+
+      {/* Back to Top */}
+      <AnimatePresence>
+        {showBackToTop && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            className="fixed bottom-6 right-6 z-50 w-10 h-10 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-white hover:border-zinc-700 transition-all shadow-lg"
+            aria-label="Back to top"
+          >
+            <ArrowUp className="w-4 h-4" aria-hidden="true" />
+          </motion.button>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
