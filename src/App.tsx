@@ -12,10 +12,8 @@ import {
   Boxes, 
   Sparkles,
   Terminal,
-  Award,
   FileText,
   ShieldCheck,
-  Activity,
   ChevronDown,
   ArrowUp
 } from 'lucide-react';
@@ -179,7 +177,22 @@ export default function App() {
 
   const enterpriseExp = [
     {
-      role: "Software Engineer / Java Backend",
+      role: "Software Engineer",
+      company: "Tata Consultancy Services (TCS)",
+      client: "Client: ICICI Bank",
+      project: "Loan Processing Platform (LPP)",
+      period: "August 2026 – Present",
+      location: "Hyderabad, India",
+      points: [
+        "Engineered and maintained core banking microservices for the Loan Processing Platform (LPP), a high-scale framework built on Spring Boot and Spring Integration standardizing microservices development.",
+        "Delivered reusable architectural components across authentication & security, centralized logging, standardized request/response schemas, distributed caching, circuit breakers, and integration gateways.",
+        "Built core business logic and relational database operations for the KYC (Know Your Customer) microservice for client ICICI Bank, powering automated customer onboarding, verification, underwriting, and disbursement workflows.",
+        "Integrated critical external and enterprise interfaces including Business Rule Engine (BRE), CIBIL credit scoring, Document Management System (DMS), and core banking systems via fault-tolerant REST APIs."
+      ],
+      tech: ["Java", "Spring Boot", "Spring Integration", "Microservices", "REST APIs", "Redis", "Resilience4j", "PostgreSQL", "Docker", "BRE", "CIBIL", "DMS"]
+    },
+    {
+      role: "Associate Software Engineer",
       company: "Mphasis Ltd",
       client: "Client: FedEx",
       project: "Global Regulatory Security Intercept Scanning (GRSIS)",
@@ -231,10 +244,9 @@ export default function App() {
   ];
 
   const achievements = [
-    { icon: Award, iconBg: "bg-amber-500/10 border-amber-500/20", iconText: "text-amber-400", title: "Star Performer of the PI", desc: "Recognized at FedEx for spearheading the end-to-end Java 8 to Java 17 migration across compliance microservices, delivering 30% latency reduction." },
-    { icon: Activity, iconBg: "bg-blue-500/10 border-blue-500/20", iconText: "text-blue-400", title: "30% System Performance", desc: "Diagnosed latency bottlenecks, optimized database plans with composite B-Tree indexes, and deployed distributed Redis caching." },
-    { icon: Terminal, iconBg: "bg-purple-500/10 border-purple-500/20", iconText: "text-purple-400", title: "300+ LeetCode Solved", desc: "Demonstrated algorithmic rigor in Java across graphs, trees, dynamic programming, backtracking, and high-concurrency structures." },
     { icon: ShieldCheck, iconBg: "bg-emerald-500/10 border-emerald-500/20", iconText: "text-emerald-400", title: "Chrome Web Store & Render Deployments", desc: "Published LinkedApply Pro to the official Google Chrome Web Store; deployed DeGhost live MVP on Render with sub-second WebSocket audits." },
+    { icon: Zap, iconBg: "bg-blue-500/10 border-blue-500/20", iconText: "text-blue-400", title: "100% JaCoCo Coverage & Kafka Engine", desc: "Engineered High-Throughput URL Shortener with 100% test coverage across 25 unit/integration tests and <4ms redirect latency via Apache Kafka." },
+    { icon: Terminal, iconBg: "bg-purple-500/10 border-purple-500/20", iconText: "text-purple-400", title: "300+ LeetCode Solved", desc: "Demonstrated algorithmic rigor in Java across graphs, trees, dynamic programming, backtracking, and high-concurrency structures." },
     { icon: Sparkles, iconBg: "bg-indigo-500/10 border-indigo-500/20", iconText: "text-indigo-400", title: "Best Paper Award — Research Publication", desc: "Published deep learning research on Lung Cancer Prediction using ResNet-50 at IJARBEST and won Best Paper. (B.Tech IT, Pondicherry University, CGPA 7.97)." },
   ];
 
@@ -344,8 +356,9 @@ export default function App() {
               </span>
             </h1>
             <p className="text-zinc-400 text-sm sm:text-base leading-relaxed max-w-3xl pt-1">
-              Software Engineer with 3+ years scaling mission-critical microservices to{' '}
-              <strong className="text-zinc-200 font-semibold">70,000+ daily scans at FedEx</strong>.
+              Software Engineer with 3+ years of experience engineering high-scale microservices at{' '}
+              <strong className="text-zinc-200 font-semibold">TCS</strong> (Loan Processing Platform for ICICI Bank) and{' '}
+              <strong className="text-zinc-200 font-semibold">FedEx</strong> (70,000+ daily scans).
               Active builder of high-performance developer tools, real-time AI security engines, and event-driven Kafka pipelines.
               Leverages <strong className="text-zinc-200 font-semibold">GitHub Copilot</strong> to accelerate engineering velocity from database schema to production.
             </p>
@@ -576,25 +589,8 @@ export default function App() {
           </div>
 
           <motion.div variants={staggerContainer} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-            {/* Row 1: 3 cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
-              {achievements.slice(0, 3).map((a, i) => (
-                <motion.div key={i} variants={staggerItem}>
-                  <SpotlightCard className="p-4 space-y-2">
-                    <div className="flex items-center gap-2.5">
-                      <div className={`w-7 h-7 rounded-lg border flex items-center justify-center shrink-0 ${a.iconBg}`}>
-                        <a.icon className={`w-4 h-4 ${a.iconText}`} aria-hidden="true" />
-                      </div>
-                      <div className="text-xs sm:text-sm font-semibold text-white">{a.title}</div>
-                    </div>
-                    <div className="text-xs text-zinc-400 leading-relaxed flex-1">{a.desc}</div>
-                  </SpotlightCard>
-                </motion.div>
-              ))}
-            </div>
-            {/* Row 2: 2 cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 mt-3.5">
-              {achievements.slice(3).map((a, i) => (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+              {achievements.map((a, i) => (
                 <motion.div key={i} variants={staggerItem}>
                   <SpotlightCard className="p-4 space-y-2">
                     <div className="flex items-center gap-2.5">
