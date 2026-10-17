@@ -177,17 +177,20 @@ export default function App() {
 
   const enterpriseExp = [
     {
+      current: true,
       role: "Software Engineer",
       company: "Tata Consultancy Services (TCS)",
       client: "Client: ICICI Bank",
+      badge: "TCS Banking Framework (TMF)",
       project: "Loan Processing Platform (LPP)",
       period: "August 2026 – Present",
       location: "Hyderabad, India",
       points: [
-        "Engineered and maintained core banking microservices for the Loan Processing Platform (LPP), a high-scale framework built on Spring Boot and Spring Integration standardizing microservices development.",
-        "Delivered reusable architectural components across authentication & security, centralized logging, standardized request/response schemas, distributed caching, circuit breakers, and integration gateways.",
+        "Engineered and maintained core banking microservices for the Loan Processing Platform (LPP), a high-scale framework built on Spring Boot and Spring Integration standardizing microservices development through reusable components.",
+        "Delivered reusable architectural modules across authentication & security, centralized logging, standardized request/response schemas, distributed caching, circuit breakers, and integration gateways.",
         "Built core business logic and relational database operations for the KYC (Know Your Customer) microservice for client ICICI Bank, powering automated customer onboarding, verification, underwriting, and disbursement workflows.",
-        "Integrated critical external and enterprise interfaces including Business Rule Engine (BRE), CIBIL credit scoring, Document Management System (DMS), and core banking systems via fault-tolerant REST APIs."
+        "Integrated critical external and enterprise interfaces including Business Rule Engine (BRE), CIBIL credit scoring, Document Management System (DMS), and core banking systems via fault-tolerant REST APIs.",
+        "Supported enterprise lending workflows across tier-1 banking clients including ICICI Bank, Axis Bank, Aditya Birla Capital, and Tata Capital within the LPP ecosystem."
       ],
       tech: ["Java", "Spring Boot", "Spring Integration", "Microservices", "REST APIs", "Redis", "Resilience4j", "PostgreSQL", "Docker", "BRE", "CIBIL", "DMS"]
     },
@@ -476,10 +479,19 @@ export default function App() {
                 <SpotlightCard className="p-5 sm:p-6 space-y-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">{exp.role}</h3>
+                        {'current' in exp && exp.current && (
+                          <span className="inline-flex items-center gap-1.5 text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-medium">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                            Current Role
+                          </span>
+                        )}
                         {exp.client && (
                           <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/20 text-blue-300">{exp.client}</span>
+                        )}
+                        {'badge' in exp && exp.badge && (
+                          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-500/10 border border-purple-500/20 text-purple-300">{exp.badge}</span>
                         )}
                       </div>
                       <div className="text-xs sm:text-sm font-medium text-blue-400 pt-0.5">{exp.company}</div>
